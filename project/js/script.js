@@ -1,51 +1,91 @@
-/* Задания на урок:
+import { movies } from "./db.js"
 
-1) Удалить все рекламные блоки со страницы (правая часть сайта)
+let ul = document.querySelector('.promo__interactive-list')
+let promoBg = document.querySelector('.promo__bg')
+let promoGenre = document.querySelector(".promo__genre")
+let promoTitle = document.querySelector(".promo__title")
+let promoDescr = document.querySelector(".promo__descr")
+let imd = document.querySelector(".imd")
+let reserch = document.querySelector(".reserch")
+let ulGenres = document.querySelector('.genresUl')
 
-2) Изменить жанр фильма, поменять "комедия" на "драма"
+let searchInput = document.querySelector('.header__search input')
 
-3) Изменить задний фон постера с фильмом на изображение "bg.jpg". Оно лежит в папке img.
-Реализовать только при помощи JS
+searchInput.addEventListener('input', function () {
+    let searchQuery = this.value.trim().toLowerCase()
+    let filteredMovies = movies.filter(movie => movie.Title.toLowerCase().includes(searchQuery))
+    reload(filteredMovies, ul)
+})
 
-4) Список фильмов на странице сформировать на основании данных из этого JS файла.
-Отсортировать их по алфавиту 
+let genres = ['All', ...new Set(movies.map(item => item.Genre))]
 
-5) Добавить нумерацию выведенных фильмов */
+reload(movies, ul)
 
-'use strict';
+function reload(arr, place) {
+    place.innerHTML = ''
 
-const movieDB = {
-    movies: [
-        "Логан",
-        "Лига справедливости",
-        "Ла-ла лэнд",
-        "Одержимость",
-        "Скотт Пилигрим против..."
-    ]
-};
+    for (let item of arr) {
+        let li = document.createElement('li')
+        let div = document.createElement('div')
+        li.innerHTML = item.Title
+        li.classList.add('promo__interactive-item')
+        div.classList.add('delete')
 
-const adv = document.querySelectorAll('.promo__adv img');
-const genre = document.querySelector('.promo__genre');
-const bg = document.querySelector('.promo__bg');
-adv.forEach((rev) => {
-    rev.remove();
-});
+        place.append(li)
+        li.append(div)
 
-genre.innerHTML = "Драма";
+        li.onclick = () => {
+            setMovies(item)
+        };
+    }
+}
 
-bg.style.backgroundImage = "url('img/bg.jpg')";
+function setMovies(item) {
+    promoBg.style.backgroundImage = `url(${item.Poster})`
+    promoGenre.innerHTML = item.Genre
+    promoTitle.innerHTML = item.Title
+    promoDescr.innerHTML = item.Plot
+    imd.innerHTML = `IMDb: ${item.imdbRating}`
+    reserch.innerHTML = `Кинопоиск: ${item.Metascore}`
+}
 
-const lis = document.querySelectorAll('.promo__interactive-list li');
+generateGenres(genres)
 
-movieDB.movies.sort();
+function generateGenres(array) {
+    ulGenres.innerHTML = ""
 
-lis.forEach((el, idx) => {
-    el.innerHTML = (idx + 1) + ". " + movieDB.movies[idx];
-    const DelBtn = '<div class="delete"></div>';
-    el.innerHTML += DelBtn;
-    el.onclick = (e) =>{
-        if (e.target.classList.contains('delete')) {
-            e.currentTarget.remove();
+    for (let item of array) {
+        let li = document.createElement('li')
+        let a = document.createElement('a')
+
+        if (array.indexOf(item) === 0) {
+            a.classList.add('promo__menu-item_active')
         }
-    };
-});
+
+        a.classList.add('promo__menu-item')
+        a.href = "#"
+        a.innerHTML = item
+
+        li.append(a)
+        ulGenres.append(li)
+
+        li.onclick = () => {
+            ulGenres.childNodes.forEach(e => e.firstChild.classList.remove('promo__menu-item_active'))
+
+            li.firstChild.classList.add('promo__menu-item_active')
+
+            let filtered = movies.filter(e => {
+                let genre = e.Genre.toLowerCase()
+                if (item.toLowerCase() === genre) {
+                    return e;
+                } else if (item.toLowerCase() === 'all') {
+                    reload(movies, ul);
+                }
+            });
+
+            if (filtered.length > 0) {
+                reload(filtered, ul)
+            }
+        };
+    }
+}
